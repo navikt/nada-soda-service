@@ -5,7 +5,7 @@ type SodaTest struct {
 	Dataset      string `json:"dataset"`
 	SlackChannel string `json:"slackChannel"`
 
-	Results []TestResult
+	Results []TestResult `json:"testResults"`
 }
 
 type TestResult struct {
