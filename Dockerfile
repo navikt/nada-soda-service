@@ -1,4 +1,4 @@
-FROM golang:1.20 as builder
+FROM golang:1.20
 
 WORKDIR /src
 COPY go.sum go.sum
@@ -7,8 +7,4 @@ RUN go mod download
 COPY . .
 RUN go build -o nada-soda-service .
 
-FROM alpine:3
-WORKDIR /app
-COPY --from=builder /src/nada-soda-service /app/nada-soda-service
-
-CMD ["/app/nada-soda-service"]
+CMD ["/src/nada-soda-service"]
