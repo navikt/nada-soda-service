@@ -44,6 +44,8 @@ func StoreSodaResults(ctx context.Context, results []SodaResult) error {
 	}
 	inserter := table.Inserter()
 
+	fmt.Println("tableRef:", table.ProjectID, table.DatasetID, table.TableID)
+
 	for _, r := range results {
 		fmt.Println("inserting row", r)
 		if err := inserter.Put(ctx, r); err != nil {

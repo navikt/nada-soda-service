@@ -14,7 +14,7 @@ spec:
     - name: BIGQUERY_DATASET
       value: soda
     - name: BIGQUERY_TABLE
-      value: soda_historic
+      value: historic
   gcp:
     bigQueryDatasets:
       - name: soda
