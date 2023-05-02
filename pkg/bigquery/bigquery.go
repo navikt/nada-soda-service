@@ -45,6 +45,7 @@ func StoreSodaResults(ctx context.Context, results []SodaResult) error {
 	inserter := table.Inserter()
 
 	for _, r := range results {
+		fmt.Println("inserting row", r)
 		if err := inserter.Put(ctx, r); err != nil {
 			return err
 		}
@@ -77,7 +78,7 @@ func createTableIfNotExists(ctx context.Context, bqClient *bigquery.Client, data
 		var e *googleapi.Error
 		if ok := xerrors.As(err, &e); ok {
 			if e.Code == 409 {
-				// already exists
+				fmt.Println("already exists")
 				return tableRef, nil
 			}
 		}
