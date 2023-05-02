@@ -40,7 +40,7 @@ func (a *API) addSODARouters(r *gin.Engine) {
 			return
 		}
 
-		sodaResults := map[string]any{}
+		sodaResults := []map[string]any{}
 		if err := json.Unmarshal(sodaBytes, &sodaResults); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "no go",
