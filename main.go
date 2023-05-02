@@ -6,6 +6,7 @@ import (
 
 	"github.com/navikt/nada-soda-service/pkg/api"
 	"github.com/navikt/nada-soda-service/pkg/bigquery"
+	"github.com/navikt/nada-soda-service/pkg/slack"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,13 +17,15 @@ func main() {
 	project := os.Getenv("GCP_TEAM_PROJECT_ID")
 	dataset := os.Getenv("BIGQUERY_DATASET")
 	table := os.Getenv("BIGQUERY_TABLE")
-
 	bqClient, err := bigquery.New(ctx, project, dataset, table, log.WithField("subsystem", "bigquery"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	router := api.New(bqClient, log)
+	slackToken := os.Getenv("SLACK_TOKEN")
+	slackClient := slack.New(slackToken, log.WithField("subsystem", "slack"))
+
+	router := api.New(bqClient, slackClient, log)
 	if err := router.Run(); err != nil {
 		log.Fatal(err)
 	}

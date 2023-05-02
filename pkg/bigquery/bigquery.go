@@ -5,54 +5,49 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/bigquery"
+	"github.com/navikt/nada-soda-service/pkg/models"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/api/googleapi"
 )
 
-type SodaResult struct {
-	ID                 string   `json:"id"`
-	Project            string   `json:"project"`
-	Dataset            string   `json:"dataset"`
-	Table              string   `json:"table"`
-	Test               string   `json:"test"`
-	Definition         string   `json:"definition"`
-	Metrics            []string `json:"metrics"`
-	ResourceAttributes []string `json:"resourceAttributes"`
-	Time               string   `json:"time"`
-	Column             string   `json:"column"`
-	Type               string   `json:"type"`
-	Filter             []string `json:"filter"`
+type BigQueryClient struct {
+	client  *bigquery.Client
+	project string
+	dataset string
+	table   string
+	log     *logrus.Entry
 }
 
-type NadaBigQuery struct {
-	client *bigquery.Client
-	table  *bigquery.Table
-	log    *logrus.Entry
-}
-
-func New(ctx context.Context, project, dataset, tableName string, log *logrus.Entry) (*NadaBigQuery, error) {
+func New(ctx context.Context, project, dataset, table string, log *logrus.Entry) (*BigQueryClient, error) {
 	client, err := bigquery.NewClient(ctx, project)
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 
-	table, err := createTableIfNotExists(ctx, client, dataset, tableName)
+	_, err = createTableIfNotExists(ctx, client, dataset, table)
 	if err != nil {
 		return nil, err
 	}
 
-	return &NadaBigQuery{
+	return &BigQueryClient{
 		client: client,
 		table:  table,
 		log:    log,
 	}, nil
 }
 
-func (b *NadaBigQuery) StoreSodaResults(ctx context.Context, results []SodaResult) error {
-	inserter := b.table.Inserter()
-	for _, r := range results {
-		fmt.Println("inserting row", r)
+func (b *BigQueryClient) StoreSodaResults(ctx context.Context, sodaTest models.SodaTest) error {
+	client, err := bigquery.NewClient(ctx, b.project)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	table := client.Dataset(b.dataset).Table(b.table)
+	inserter := table.Inserter()
+	for _, r := range toBigqueryRows(sodaTest) {
 		if err := inserter.Put(ctx, r); err != nil {
 			return err
 		}
@@ -67,6 +62,7 @@ func createTableIfNotExists(ctx context.Context, bqClient *bigquery.Client, data
 		{Name: "dataset", Type: bigquery.StringFieldType, Required: true},
 		{Name: "table", Type: bigquery.StringFieldType, Required: true},
 		{Name: "test", Type: bigquery.StringFieldType, Required: true},
+		{Name: "outcome", Type: bigquery.StringFieldType, Required: true},
 		{Name: "definition", Type: bigquery.StringFieldType},
 		{Name: "metrics", Type: bigquery.StringFieldType, Repeated: true},
 		{Name: "resourceAttributes", Type: bigquery.StringFieldType, Repeated: true},
@@ -93,4 +89,27 @@ func createTableIfNotExists(ctx context.Context, bqClient *bigquery.Client, data
 	}
 
 	return tableRef, nil
+}
+
+func toBigqueryRows(sodaTest models.SodaTest) []models.BigqueryRow {
+	out := []models.BigqueryRow{}
+	for _, r := range sodaTest.Results {
+		out = append(out, models.BigqueryRow{
+			ID:                 r.ID,
+			Project:            sodaTest.GCPProject,
+			Dataset:            sodaTest.Dataset,
+			Table:              r.Table,
+			Test:               r.Test,
+			Outcome:            r.Outcome,
+			Definition:         r.Definition,
+			Metrics:            r.Metrics,
+			ResourceAttributes: r.ResourceAttributes,
+			Time:               r.Time,
+			Column:             r.Column,
+			Type:               r.Type,
+			Filter:             r.Filter,
+		})
+	}
+
+	return out
 }

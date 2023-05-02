@@ -1,27 +1,32 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navikt/nada-soda-service/pkg/bigquery"
+	"github.com/navikt/nada-soda-service/pkg/models"
+	"github.com/navikt/nada-soda-service/pkg/slack"
 	"github.com/sirupsen/logrus"
 )
 
 type API struct {
-	router   *gin.Engine
-	bqClient *bigquery.NadaBigQuery
-	log      *logrus.Entry
+	router      *gin.Engine
+	bqClient    *bigquery.BigQueryClient
+	slackClient *slack.SlackClient
+	log         *logrus.Entry
 }
 
-func New(bqClient *bigquery.NadaBigQuery, log *logrus.Logger) *API {
+func New(bqClient *bigquery.BigQueryClient, slackClient *slack.SlackClient, log *logrus.Logger) *API {
 	r := gin.Default()
 	a := &API{
-		router:   r,
-		bqClient: bqClient,
-		log:      logrus.WithField("subsystem", "api"),
+		router:      r,
+		bqClient:    bqClient,
+		slackClient: slackClient,
+		log:         logrus.WithField("subsystem", "api"),
 	}
 	a.addSODARouters(r)
 
@@ -37,27 +42,40 @@ func (a *API) addSODARouters(r *gin.Engine) {
 		sodaBytes, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "no go",
+				"message": "reading request body",
 			})
 			return
 		}
 
-		sodaResults := []bigquery.SodaResult{}
+		sodaResults := models.SodaTest{}
 		if err := json.Unmarshal(sodaBytes, &sodaResults); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "no go",
+				"message": "unmarshal request body",
 			})
 			return
 		}
 
-		if err := a.bqClient.StoreSodaResults(c, sodaResults); err != nil {
+		if err := a.processSodaResults(c, sodaResults); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "no go",
+				"message": "error processing soda results",
 			})
 			return
 		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"message": "ok",
 		})
 	})
+}
+
+func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaTest) error {
+	if err := a.slackClient.NotifyOnTestErrors(sodaTest); err != nil {
+		return err
+	}
+
+	if err := a.bqClient.StoreSodaResults(ctx, sodaTest); err != nil {
+		return err
+	}
+
+	return nil
 }
