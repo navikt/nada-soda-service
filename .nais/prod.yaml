@@ -1,0 +1,21 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  labels:
+    team: nada
+  name: nada-soda
+  namespace: nada
+spec:
+  image: {{ image }}
+  replicas:
+    min: 1
+    max: 2
+  env:
+    - name: BIGQUERY_DATASET
+      value: soda
+    - name: BIGQUERY_TABLE
+      value: soda_historic
+  gcp:
+    bigQueryDatasets:
+      - name: soda
+        permission: READWRITE
