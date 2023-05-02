@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -56,14 +55,12 @@ func (a *API) addSODARouters(r *gin.Engine) {
 			return
 		}
 
-		fmt.Println(sodaResults)
-
-		// if err := a.processSodaResults(c, sodaResults); err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"message": "error processing soda results",
-		// 	})
-		// 	return
-		// }
+		if err := a.processSodaResults(c, sodaResults); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "error processing soda results",
+			})
+			return
+		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"message": "ok",
