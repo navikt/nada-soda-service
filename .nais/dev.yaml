@@ -19,3 +19,5 @@ spec:
     bigQueryDatasets:
       - name: soda
         permission: READWRITE
+  ingresses:
+    - https://nada-soda.intern.dev.nav.no

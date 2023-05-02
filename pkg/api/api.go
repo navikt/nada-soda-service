@@ -40,7 +40,7 @@ func (a *API) addSODARouters(r *gin.Engine) {
 			return
 		}
 
-		sodaResults := []map[string]any{}
+		sodaResults := []bigquery.SodaResult{}
 		if err := json.Unmarshal(sodaBytes, &sodaResults); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "no go",
@@ -48,7 +48,7 @@ func (a *API) addSODARouters(r *gin.Engine) {
 			return
 		}
 
-		if err := bigquery.StoreSodaResults(sodaResults); err != nil {
+		if err := bigquery.StoreSodaResults(c, sodaResults); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "no go",
 			})

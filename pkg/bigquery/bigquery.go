@@ -1,10 +1,85 @@
 package bigquery
 
 import (
-	"fmt"
+	"context"
+	"os"
+
+	"cloud.google.com/go/bigquery"
+	"golang.org/x/xerrors"
+	"google.golang.org/api/googleapi"
 )
 
-func StoreSodaResults(data []map[string]any) error {
-	fmt.Println(data)
+type SodaResult struct {
+	ID                 string   `json:"id"`
+	Project            string   `json:"project"`
+	Dataset            string   `json:"dataset"`
+	Table              string   `json:"table"`
+	Test               string   `json:"test"`
+	Definition         string   `json:"definition"`
+	Metrics            []string `json:"metrics"`
+	ResourceAttributes []string `json:"resourceAttributes"`
+	Time               string   `json:"time"`
+	Column             string   `json:"column"`
+	Type               string   `json:"type"`
+	Filter             []string `json:"filter"`
+}
+
+func StoreSodaResults(ctx context.Context, results []SodaResult) error {
+	project := os.Getenv("GCP_TEAM_PROJECT_ID")
+	dataset := os.Getenv("BIGQUERY_DATASET")
+	tablename := os.Getenv("BIGQUERY_TABLE")
+
+	bqClient, err := bigquery.NewClient(ctx, project)
+	if err != nil {
+		panic(err)
+	}
+	defer bqClient.Close()
+
+	table, err := createTableIfNotExists(ctx, bqClient, dataset, tablename)
+	if err != nil {
+		panic(err)
+	}
+	inserter := table.Inserter()
+
+	for _, r := range results {
+		if err := inserter.Put(ctx, r); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func createTableIfNotExists(ctx context.Context, bqClient *bigquery.Client, dataset, table string) (*bigquery.Table, error) {
+	schema := bigquery.Schema{
+		{Name: "id", Type: bigquery.StringFieldType, Required: true},
+		{Name: "project", Type: bigquery.StringFieldType, Required: true},
+		{Name: "dataset", Type: bigquery.StringFieldType, Required: true},
+		{Name: "table", Type: bigquery.StringFieldType, Required: true},
+		{Name: "test", Type: bigquery.StringFieldType, Required: true},
+		{Name: "definition", Type: bigquery.StringFieldType},
+		{Name: "metrics", Type: bigquery.StringFieldType, Repeated: true},
+		{Name: "resourceAttributes", Type: bigquery.StringFieldType, Repeated: true},
+		{Name: "time", Type: bigquery.TimestampFieldType},
+		{Name: "column", Type: bigquery.StringFieldType},
+		{Name: "type", Type: bigquery.StringFieldType},
+		{Name: "filter", Type: bigquery.StringFieldType, Repeated: true},
+	}
+
+	metadata := &bigquery.TableMetadata{
+		Schema: schema,
+	}
+
+	tableRef := bqClient.Dataset(dataset).Table(table)
+	if err := tableRef.Create(ctx, metadata); err != nil {
+		var e *googleapi.Error
+		if ok := xerrors.As(err, &e); ok {
+			if e.Code == 409 {
+				// already exists
+				return tableRef, nil
+			}
+		}
+		return nil, err
+	}
+
+	return tableRef, nil
 }
