@@ -10,7 +10,7 @@ spec:
   accessPolicy:
     outbound:
       external:
-        - host: hooks.slack.com
+        - host: slack.com
   replicas:
     min: 1
     max: 2
@@ -25,5 +25,3 @@ spec:
     bigQueryDatasets:
       - name: soda
         permission: READWRITE
-  ingresses:
-    - https://nada-soda.intern.dev.nav.no
