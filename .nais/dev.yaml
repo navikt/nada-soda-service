@@ -7,6 +7,10 @@ metadata:
   namespace: nada
 spec:
   image: {{ image }}
+  accessPolicy:
+    outbound:
+      external:
+        - host: hooks.slack.com
   replicas:
     min: 1
     max: 2

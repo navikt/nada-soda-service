@@ -70,10 +70,12 @@ func (a *API) addSODARouters(r *gin.Engine) {
 
 func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaTest) error {
 	if err := a.slackClient.NotifyOnTestErrors(sodaTest); err != nil {
+		a.log.Errorf("sending slack notification: %v", err)
 		return err
 	}
 
 	if err := a.bqClient.StoreSodaResults(ctx, sodaTest); err != nil {
+		a.log.Error("storing soda results %v", err)
 		return err
 	}
 
