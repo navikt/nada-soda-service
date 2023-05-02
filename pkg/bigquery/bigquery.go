@@ -32,9 +32,11 @@ func New(ctx context.Context, project, dataset, table string, log *logrus.Entry)
 	}
 
 	return &BigQueryClient{
-		client: client,
-		table:  table,
-		log:    log,
+		client:  client,
+		project: project,
+		dataset: dataset,
+		table:   table,
+		log:     log,
 	}, nil
 }
 
