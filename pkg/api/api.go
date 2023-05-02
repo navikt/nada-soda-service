@@ -1,9 +1,12 @@
 package api
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/navikt/nada-soda-service/pkg/bigquery"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,6 +32,28 @@ func (a *API) Run() error {
 
 func (a *API) addSODARouters(r *gin.Engine) {
 	a.router.POST("/soda/new", func(c *gin.Context) {
+		sodaBytes, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "no go",
+			})
+			return
+		}
+
+		sodaResults := map[string]any{}
+		if err := json.Unmarshal(sodaBytes, &sodaResults); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "no go",
+			})
+			return
+		}
+
+		if err := bigquery.StoreSodaResults(sodaResults); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "no go",
+			})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"message": "ok",
 		})
