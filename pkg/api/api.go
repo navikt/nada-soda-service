@@ -11,15 +11,17 @@ import (
 )
 
 type API struct {
-	router *gin.Engine
-	log    *logrus.Entry
+	router   *gin.Engine
+	bqClient *bigquery.NadaBigQuery
+	log      *logrus.Entry
 }
 
-func New(log *logrus.Logger) *API {
+func New(bqClient *bigquery.NadaBigQuery, log *logrus.Logger) *API {
 	r := gin.Default()
 	a := &API{
-		router: r,
-		log:    logrus.WithField("subsystem", "api"),
+		router:   r,
+		bqClient: bqClient,
+		log:      logrus.WithField("subsystem", "api"),
 	}
 	a.addSODARouters(r)
 
@@ -48,7 +50,7 @@ func (a *API) addSODARouters(r *gin.Engine) {
 			return
 		}
 
-		if err := bigquery.StoreSodaResults(c, sodaResults); err != nil {
+		if err := a.bqClient.StoreSodaResults(c, sodaResults); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "no go",
 			})

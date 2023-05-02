@@ -3,9 +3,9 @@ package bigquery
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"cloud.google.com/go/bigquery"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/api/googleapi"
 )
@@ -25,27 +25,32 @@ type SodaResult struct {
 	Filter             []string `json:"filter"`
 }
 
-func StoreSodaResults(ctx context.Context, results []SodaResult) error {
-	project := os.Getenv("GCP_TEAM_PROJECT_ID")
-	dataset := os.Getenv("BIGQUERY_DATASET")
-	tablename := os.Getenv("BIGQUERY_TABLE")
+type NadaBigQuery struct {
+	client *bigquery.Client
+	table  *bigquery.Table
+	log    *logrus.Entry
+}
 
-	fmt.Println(results)
-
-	bqClient, err := bigquery.NewClient(ctx, project)
+func New(ctx context.Context, project, dataset, tableName string, log *logrus.Entry) (*NadaBigQuery, error) {
+	client, err := bigquery.NewClient(ctx, project)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer bqClient.Close()
 
-	table, err := createTableIfNotExists(ctx, bqClient, dataset, tablename)
+	table, err := createTableIfNotExists(ctx, client, dataset, tableName)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	inserter := table.Inserter()
 
-	fmt.Println("tableRef:", table.ProjectID, table.DatasetID, table.TableID)
+	return &NadaBigQuery{
+		client: client,
+		table:  table,
+		log:    log,
+	}, nil
+}
 
+func (b *NadaBigQuery) StoreSodaResults(ctx context.Context, results []SodaResult) error {
+	inserter := b.table.Inserter()
 	for _, r := range results {
 		fmt.Println("inserting row", r)
 		if err := inserter.Put(ctx, r); err != nil {
