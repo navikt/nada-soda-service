@@ -2,6 +2,7 @@ package bigquery
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"cloud.google.com/go/bigquery"
@@ -28,6 +29,8 @@ func StoreSodaResults(ctx context.Context, results []SodaResult) error {
 	project := os.Getenv("GCP_TEAM_PROJECT_ID")
 	dataset := os.Getenv("BIGQUERY_DATASET")
 	tablename := os.Getenv("BIGQUERY_TABLE")
+
+	fmt.Println(results)
 
 	bqClient, err := bigquery.NewClient(ctx, project)
 	if err != nil {
