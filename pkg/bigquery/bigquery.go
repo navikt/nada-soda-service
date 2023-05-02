@@ -34,13 +34,13 @@ func StoreSodaResults(ctx context.Context, results []SodaResult) error {
 
 	bqClient, err := bigquery.NewClient(ctx, project)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer bqClient.Close()
 
 	table, err := createTableIfNotExists(ctx, bqClient, dataset, tablename)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	inserter := table.Inserter()
 
