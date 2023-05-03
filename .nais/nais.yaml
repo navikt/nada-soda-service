@@ -7,6 +7,14 @@ metadata:
   namespace: nada
 spec:
   image: {{ image }}
+  accessPolicy:
+    outbound:
+      external:
+        - host: slack.com
+    inbound:
+      rules:
+        - application: '*'
+          namespace: '*'
   replicas:
     min: 1
     max: 2
@@ -14,7 +22,9 @@ spec:
     - name: BIGQUERY_DATASET
       value: soda
     - name: BIGQUERY_TABLE
-      value: soda_historic
+      value: historic
+  envFrom:
+    - secret: slack-token
   gcp:
     bigQueryDatasets:
       - name: soda
