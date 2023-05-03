@@ -101,14 +101,14 @@ func (s *SlackClient) createMessage(d testDiscrepancies, projectID, dataset stri
 
 	if len(d.Warnings) > 0 {
 		message := ""
-		for _, e := range d.Errors {
+		for _, w := range d.Warnings {
 			line1 := ""
-			if e.Column != "" {
-				line1 = fmt.Sprintf("_*Tabell: %v*_ _*kolonne: %v*_\n", e.Table, e.Column)
+			if w.Column != "" {
+				line1 = fmt.Sprintf("_*Tabell: %v*_ _*kolonne: %v*_\n", w.Table, w.Column)
 			} else {
-				line1 = fmt.Sprintf("_*Tabell: %v*_\n", e.Table)
+				line1 = fmt.Sprintf("_*Tabell: %v*_\n", w.Table)
 			}
-			line2 := e.Test + "\n"
+			line2 := w.Test + "\n"
 			message = message + line1 + line2
 		}
 		attachments = append(attachments, slack.Attachment{
