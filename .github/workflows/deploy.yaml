@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 jobs:
   set-version:
@@ -46,15 +47,13 @@ jobs:
         tags: ${{ env.IMAGE }}
 
     - name: Deploy to dev-gcp
-      uses: nais/deploy/actions/deploy@v1
+      uses: nais/deploy/actions/deploy@v2
       env:
-        APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
         CLUSTER: dev-gcp
         RESOURCE: .nais/nais.yaml
 
     - name: Deploy to prod-gcp
-      uses: nais/deploy/actions/deploy@v1
+      uses: nais/deploy/actions/deploy@v2
       env:
-        APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
         CLUSTER: prod-gcp
         RESOURCE: .nais/nais.yaml
