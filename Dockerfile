@@ -15,4 +15,4 @@ FROM gcr.io/distroless/static-debian12
 WORKDIR /app
 COPY --from=builder /src/nada-soda-service /app/nada-soda-service
 
-CMD ["/src/nada-soda-service"]
+CMD ["/app/nada-soda-service"]
