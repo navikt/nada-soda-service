@@ -22,7 +22,7 @@ func New(token string) *Client {
 	}
 }
 
-func (s *Client) NotifyOnDiscrepancies(sodaTest models.SodaTest) error {
+func (s *Client) NotifyOnDiscrepancies(sodaTest models.SodaReport) error {
 	if sodaTest.SlackChannel == "" {
 		return fmt.Errorf("no Slack channel provided for dataset %v.%v", sodaTest.GCPProject, sodaTest.Dataset)
 	}
@@ -86,6 +86,7 @@ func (s *Client) createMessage(d testDiscrepancies, projectID, dataset string) (
 			line2 := e.Test + "\n"
 			message = message + line1 + line2
 		}
+
 		attachments = append(attachments, slack.Attachment{
 			Color:      "#ff2d00",
 			AuthorName: fmt.Sprintf("%v.%v", projectID, dataset),
@@ -108,6 +109,7 @@ func (s *Client) createMessage(d testDiscrepancies, projectID, dataset string) (
 			line2 := w.Test + "\n"
 			message = message + line1 + line2
 		}
+
 		attachments = append(attachments, slack.Attachment{
 			Color:      "#ffa500",
 			AuthorName: fmt.Sprintf("%v.%v", projectID, dataset),

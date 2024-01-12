@@ -87,7 +87,7 @@ func createTableIfNotExists(ctx context.Context, bqClient *bigquery.Client, data
 	return tableRef, nil
 }
 
-func (b *Client) StoreResults(ctx context.Context, report models.SodaTest) error {
+func (b *Client) StoreResults(ctx context.Context, report models.SodaReport) error {
 	client, err := bigquery.NewClient(ctx, b.project)
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func (b *Client) StoreResults(ctx context.Context, report models.SodaTest) error
 	return nil
 }
 
-func toBigQueryRows(report models.SodaTest) []BigQueryRow {
+func toBigQueryRows(report models.SodaReport) []BigQueryRow {
 	rows := []BigQueryRow{}
 	for _, r := range report.Results {
 		rows = append(rows, BigQueryRow{

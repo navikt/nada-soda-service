@@ -1,6 +1,6 @@
 package models
 
-type SodaTest struct {
+type SodaReport struct {
 	GCPProject   string `json:"gcpProject"`
 	Dataset      string `json:"dataset"`
 	SlackChannel string `json:"slackChannel"`

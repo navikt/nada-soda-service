@@ -48,7 +48,7 @@ func (a *API) addSodaRouters() {
 			return
 		}
 
-		sodaResults := models.SodaTest{}
+		sodaResults := models.SodaReport{}
 		if err := json.Unmarshal(sodaBytes, &sodaResults); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "unmarshal request body",
@@ -72,7 +72,7 @@ func (a *API) addSodaRouters() {
 	})
 }
 
-func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaTest) error {
+func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaReport) error {
 	if err := a.slack.NotifyOnDiscrepancies(sodaTest); err != nil {
 		return fmt.Errorf("sending Slack notification: %w", err)
 	}
