@@ -4,13 +4,11 @@ import (
 	"fmt"
 
 	"github.com/navikt/nada-soda-service/pkg/models"
-	"github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 )
 
-type SlackClient struct {
-	slackToken string
-	log        *logrus.Entry
+type Client struct {
+	token string
 }
 
 type testDiscrepancies struct {
@@ -18,18 +16,17 @@ type testDiscrepancies struct {
 	Warnings []models.TestResult
 }
 
-func New(slackToken string, log *logrus.Entry) *SlackClient {
-	return &SlackClient{
-		slackToken: slackToken,
-		log:        log,
+func New(token string) *Client {
+	return &Client{
+		token: token,
 	}
 }
 
-func (s *SlackClient) NotifyOnTestErrors(sodaTest models.SodaTest) error {
+func (s *Client) NotifyOnDiscrepancies(sodaTest models.SodaTest) error {
 	if sodaTest.SlackChannel == "" {
-		s.log.Warningf("no slack channel provided for dataset %v.%v", sodaTest.GCPProject, sodaTest.Dataset)
-		return nil
+		return fmt.Errorf("no Slack channel provided for dataset %v.%v", sodaTest.GCPProject, sodaTest.Dataset)
 	}
+
 	if hasDiscrepancies, discrepancies := s.findDiscrepancies(sodaTest.Results); hasDiscrepancies {
 		if err := s.postNotification(discrepancies, sodaTest.GCPProject, sodaTest.Dataset, sodaTest.SlackChannel); err != nil {
 			return err
@@ -39,7 +36,7 @@ func (s *SlackClient) NotifyOnTestErrors(sodaTest models.SodaTest) error {
 	return nil
 }
 
-func (s *SlackClient) findDiscrepancies(sodaResults []models.TestResult) (bool, testDiscrepancies) {
+func (s *Client) findDiscrepancies(sodaResults []models.TestResult) (bool, testDiscrepancies) {
 	discrepancies := testDiscrepancies{}
 	for _, r := range sodaResults {
 		switch r.Outcome {
@@ -55,8 +52,8 @@ func (s *SlackClient) findDiscrepancies(sodaResults []models.TestResult) (bool, 
 	return len(discrepancies.Errors) > 0 || len(discrepancies.Warnings) > 0, discrepancies
 }
 
-func (s *SlackClient) postNotification(d testDiscrepancies, projectID, dataset, slackChannel string) error {
-	slackClient := slack.New(s.slackToken)
+func (s *Client) postNotification(d testDiscrepancies, projectID, dataset, slackChannel string) error {
+	slackClient := slack.New(s.token)
 
 	topSection, attachments := s.createMessage(d, projectID, dataset)
 	_, _, err := slackClient.PostMessage(slackChannel, slack.MsgOptionBlocks(topSection), slack.MsgOptionAttachments(attachments...))
@@ -67,7 +64,7 @@ func (s *SlackClient) postNotification(d testDiscrepancies, projectID, dataset, 
 	return nil
 }
 
-func (s *SlackClient) createMessage(d testDiscrepancies, projectID, dataset string) (slack.Block, []slack.Attachment) {
+func (s *Client) createMessage(d testDiscrepancies, projectID, dataset string) (slack.Block, []slack.Attachment) {
 	topMessage := slack.TextBlockObject{
 		Type:  "plain_text",
 		Text:  "Varsel om datakvalitetsavvik :gasp:",

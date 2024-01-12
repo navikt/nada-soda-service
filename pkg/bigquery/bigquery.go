@@ -2,12 +2,10 @@ package bigquery
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/navikt/nada-soda-service/pkg/models"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/xerrors"
 	"google.golang.org/api/googleapi"
 )
 
@@ -16,10 +14,9 @@ type BigQueryClient struct {
 	project string
 	dataset string
 	table   string
-	log     *logrus.Entry
 }
 
-func New(ctx context.Context, project, dataset, table string, log *logrus.Entry) (*BigQueryClient, error) {
+func New(ctx context.Context, project, dataset, table string) (*BigQueryClient, error) {
 	client, err := bigquery.NewClient(ctx, project)
 	if err != nil {
 		return nil, err
@@ -36,7 +33,6 @@ func New(ctx context.Context, project, dataset, table string, log *logrus.Entry)
 		project: project,
 		dataset: dataset,
 		table:   table,
-		log:     log,
 	}, nil
 }
 
@@ -81,9 +77,8 @@ func createTableIfNotExists(ctx context.Context, bqClient *bigquery.Client, data
 	tableRef := bqClient.Dataset(dataset).Table(table)
 	if err := tableRef.Create(ctx, metadata); err != nil {
 		var e *googleapi.Error
-		if ok := xerrors.As(err, &e); ok {
+		if ok := errors.As(err, &e); ok {
 			if e.Code == 409 {
-				fmt.Println("already exists")
 				return tableRef, nil
 			}
 		}

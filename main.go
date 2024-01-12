@@ -17,16 +17,16 @@ func main() {
 	project := os.Getenv("GCP_TEAM_PROJECT_ID")
 	dataset := os.Getenv("BIGQUERY_DATASET")
 	table := os.Getenv("BIGQUERY_TABLE")
-	bqClient, err := bigquery.New(ctx, project, dataset, table, log.WithField("subsystem", "bigquery"))
+	bqClient, err := bigquery.New(ctx, project, dataset, table)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal("creating BigQuery client")
 	}
 
 	slackToken := os.Getenv("SLACK_TOKEN")
-	slackClient := slack.New(slackToken, log.WithField("subsystem", "slack"))
+	slackClient := slack.New(slackToken)
 
-	router := api.New(bqClient, slackClient, log)
+	router := api.New(bqClient, slackClient, log.WithField("subsystem", "api"))
 	if err := router.Run(); err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal("running API")
 	}
 }
