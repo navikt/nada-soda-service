@@ -16,12 +16,12 @@ import (
 
 type API struct {
 	router   *gin.Engine
-	bigQuery *bigquery.BigQueryClient
+	bigQuery *bigquery.Client
 	slack    *slack.Client
 	log      *logrus.Entry
 }
 
-func New(bqClient *bigquery.BigQueryClient, slackClient *slack.Client, log *logrus.Entry) *API {
+func New(bqClient *bigquery.Client, slackClient *slack.Client, log *logrus.Entry) *API {
 	api := &API{
 		router:   gin.Default(),
 		bigQuery: bqClient,
@@ -77,7 +77,7 @@ func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaTest) 
 		return fmt.Errorf("sending Slack notification: %w", err)
 	}
 
-	if err := a.bigQuery.StoreSodaResults(ctx, sodaTest); err != nil {
+	if err := a.bigQuery.StoreResults(ctx, sodaTest); err != nil {
 		return fmt.Errorf("storing Soda results: %w", err)
 	}
 
