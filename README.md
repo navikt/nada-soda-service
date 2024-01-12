@@ -47,7 +47,7 @@ Sett følgende miljøvariabler i terminalen du skal kjøre opp appen:
 - `GCP_TEAM_PROJECT_ID`: GCP prosjektet hvor du ønsker å lagre Soda testresultater
 - `BIGQUERY_DATASET`: Datasett i GCP prosjektet hvor du ønsker å lagre Soda testresultater
 - `BIGQUERY_TABLE`: Tabell i datasett hvor du ønsker å lagre Soda testresultater
-- `SLACK_TOKEN`: Token for Slack appen som skal brukes for å poste datakvalitetsavvik. 
+- `SLACK_TOKEN`: Token for Slack appen som skal brukes for å poste datakvalitetsavvik.
 
 `SLACK_TOKEN` kan settes med:
 ````bash
