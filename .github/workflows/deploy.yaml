@@ -16,7 +16,7 @@ jobs:
     outputs:
       version: ${{ steps.set-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: set version
         id: set-version
         run: echo ::set-output name=version::"$(date '+%Y-%m-%d')-$(git --no-pager log -1 --pretty=%h)"
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: set-version
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up environment
       run: |
         version=${{ needs.set-version.outputs.version }}
