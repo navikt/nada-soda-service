@@ -10,7 +10,7 @@ COPY pkg pkg
 
 RUN go build -o nada-soda-service .
 
-FROM gcr.io/distroless/static-debian12
+FROM gcr.io/distroless/static-debian12:nonroot
 
 WORKDIR /app
 COPY --from=builder /src/nada-soda-service /app/nada-soda-service
