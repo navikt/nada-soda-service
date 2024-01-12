@@ -1,59 +1,48 @@
-name: build, push and deploy
-on: 
+name: Build, push, and deploy
+
+on:
   push:
     branches:
-      - 'main'
+      - main
 
-permissions:
-  contents: read
-  packages: write
-  id-token: write
 
 jobs:
-  set-version:
-    name: Set version
+  build:
+    name: Build and push Docker container
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     outputs:
-      version: ${{ steps.set-version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: set version
-        id: set-version
-        run: echo ::set-output name=version::"$(date '+%Y-%m-%d')-$(git --no-pager log -1 --pretty=%h)"
-
-  build-and-deploy:
-    name: Build and deploy
-    runs-on: ubuntu-20.04
-    needs: set-version
+      image: ${{ steps.docker-build-push.outputs.image }}
     steps:
     - uses: actions/checkout@v4
-    - name: Set up environment
-      run: |
-        version=${{ needs.set-version.outputs.version }}
-        prefix=ghcr.io/${{ github.repository }}
-        echo "IMAGE=$prefix:$version" >> $GITHUB_ENV
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # Use commit-sha1 instead of tag for security concerns
+    - name: Push docker image to GAR
+      uses: nais/docker-build-push@v0
+      id: docker-build-push
       with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        team: nada
+        identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }} # Provided as Organization Secret
+        project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }} # Provided as Organization Variable
 
-    - name: Build and push Dockerimage
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: ${{ env.IMAGE }}
-
-    - name: Deploy to dev-gcp
-      uses: nais/deploy/actions/deploy@v2
+  dev:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: nais/deploy/actions/deploy@v2
       env:
         CLUSTER: dev-gcp
         RESOURCE: .nais/nais.yaml
+        VAR: image=${{ needs.build.outputs.image }}
 
-    - name: Deploy to prod-gcp
-      uses: nais/deploy/actions/deploy@v2
+  prod:
+    needs: dev
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: nais/deploy/actions/deploy@v2
       env:
         CLUSTER: prod-gcp
         RESOURCE: .nais/nais.yaml
+        VAR: image=${{ needs.build.outputs.image }}
