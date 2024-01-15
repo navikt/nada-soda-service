@@ -37,7 +37,7 @@ jobs:
         VAR: image=${{ needs.build.outputs.image }}
 
   prod:
-    needs: dev
+    needs: build, dev
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
