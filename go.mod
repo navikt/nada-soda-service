@@ -7,7 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slack-go/slack v0.12.3
-	google.golang.org/api v0.159.0
+	google.golang.org/api v0.161.0
 )
 
 require (
