@@ -3,11 +3,11 @@ module github.com/navikt/nada-soda-service
 go 1.19
 
 require (
-	cloud.google.com/go/bigquery v1.59.0
+	cloud.google.com/go/bigquery v1.59.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/slack-go/slack v0.12.3
-	google.golang.org/api v0.162.0
+	github.com/slack-go/slack v0.12.4
+	google.golang.org/api v0.165.0
 )
 
 require (
@@ -51,16 +51,16 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.47.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
-	go.opentelemetry.io/otel v1.22.0 // indirect
-	go.opentelemetry.io/otel/metric v1.22.0 // indirect
-	go.opentelemetry.io/otel/trace v1.22.0 // indirect
+	go.opentelemetry.io/otel v1.23.0 // indirect
+	go.opentelemetry.io/otel/metric v1.23.0 // indirect
+	go.opentelemetry.io/otel/trace v1.23.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/oauth2 v0.16.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/oauth2 v0.17.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
