@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/bigquery v1.59.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/slack-go/slack v0.12.4
+	github.com/slack-go/slack v0.12.5
 	google.golang.org/api v0.167.0
 )
 
