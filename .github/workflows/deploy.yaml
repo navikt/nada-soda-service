@@ -1,5 +1,6 @@
-name: build, push and deploy
-on: 
+name: Build, push, and deploy
+
+on:
   push:
     branches:
       - '*'

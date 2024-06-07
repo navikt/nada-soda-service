@@ -9,9 +9,9 @@ import (
 	"github.com/slack-go/slack"
 )
 
-type SlackClient struct {
-	slackToken string
-	log        *logrus.Entry
+type Client struct {
+	token string
+	log   *logrus.Entry
 }
 
 type testDiscrepancies struct {
@@ -19,18 +19,18 @@ type testDiscrepancies struct {
 	Warnings []models.TestResult
 }
 
-func New(slackToken string, log *logrus.Entry) *SlackClient {
-	return &SlackClient{
-		slackToken: slackToken,
-		log:        log,
+func New(token string, log *logrus.Entry) *Client {
+	return &Client{
+		token: token,
+		log:   log,
 	}
 }
 
-func (s *SlackClient) Notify(sodaTest models.SodaTest) error {
+func (s *Client) Notify(sodaTest models.SodaReport) error {
 	if sodaTest.SlackChannel == "" {
-		s.log.Warningf("no slack channel provided for dataset %v.%v", sodaTest.GCPProject, sodaTest.Dataset)
-		return nil
+		return fmt.Errorf("no Slack channel provided for dataset %v.%v", sodaTest.GCPProject, sodaTest.Dataset)
 	}
+
 	if hasDiscrepancies, discrepancies := s.findDiscrepancies(sodaTest.Results); hasDiscrepancies {
 		topSection, attachments := s.createDiscrepancyMessage(discrepancies, sodaTest.GCPProject, sodaTest.Dataset)
 		if err := s.postNotification(sodaTest.SlackChannel, topSection, attachments); err != nil {
@@ -53,7 +53,7 @@ func (s *SlackClient) Notify(sodaTest models.SodaTest) error {
 	return nil
 }
 
-func (s *SlackClient) findDiscrepancies(sodaResults []models.TestResult) (bool, testDiscrepancies) {
+func (s *Client) findDiscrepancies(sodaResults []models.TestResult) (bool, testDiscrepancies) {
 	discrepancies := testDiscrepancies{}
 	for _, r := range sodaResults {
 		switch r.Outcome {
@@ -69,8 +69,8 @@ func (s *SlackClient) findDiscrepancies(sodaResults []models.TestResult) (bool, 
 	return len(discrepancies.Errors) > 0 || len(discrepancies.Warnings) > 0, discrepancies
 }
 
-func (s *SlackClient) postNotification(slackChannel string, topSection slack.Block, attachments []slack.Attachment) error {
-	slackClient := slack.New(s.slackToken)
+func (s *Client) postNotification(slackChannel string, topSection slack.Block, attachments []slack.Attachment) error {
+	slackClient := slack.New(s.token)
 
 	_, _, err := slackClient.PostMessage(slackChannel, slack.MsgOptionBlocks(topSection), slack.MsgOptionAttachments(attachments...))
 	if err != nil {
@@ -80,7 +80,7 @@ func (s *SlackClient) postNotification(slackChannel string, topSection slack.Blo
 	return nil
 }
 
-func (s *SlackClient) createPassedScanMessage(projectID, dataset string) (slack.Block, []slack.Attachment) {
+func (s *Client) createPassedScanMessage(projectID, dataset string) (slack.Block, []slack.Attachment) {
 	topMessage := slack.TextBlockObject{
 		Type:  "plain_text",
 		Text:  "SODA scan gjennomført uten feil :checked:",
@@ -99,7 +99,7 @@ func (s *SlackClient) createPassedScanMessage(projectID, dataset string) (slack.
 	return topSection, attachments
 }
 
-func (s *SlackClient) createDiscrepancyMessage(d testDiscrepancies, projectID, dataset string) (slack.Block, []slack.Attachment) {
+func (s *Client) createDiscrepancyMessage(d testDiscrepancies, projectID, dataset string) (slack.Block, []slack.Attachment) {
 	topMessage := slack.TextBlockObject{
 		Type:  "plain_text",
 		Text:  "Varsel om datakvalitetsavvik :gasp:",
@@ -121,6 +121,7 @@ func (s *SlackClient) createDiscrepancyMessage(d testDiscrepancies, projectID, d
 			line2 := e.Test + "\n"
 			message = message + line1 + line2
 		}
+
 		attachments = append(attachments, slack.Attachment{
 			Color:      "#ff2d00",
 			AuthorName: fmt.Sprintf("%v.%v", projectID, dataset),
@@ -143,6 +144,7 @@ func (s *SlackClient) createDiscrepancyMessage(d testDiscrepancies, projectID, d
 			line2 := w.Test + "\n"
 			message = message + line1 + line2
 		}
+
 		attachments = append(attachments, slack.Attachment{
 			Color:      "#ffa500",
 			AuthorName: fmt.Sprintf("%v.%v", projectID, dataset),

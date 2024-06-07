@@ -3,7 +3,8 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,50 +15,53 @@ import (
 )
 
 type API struct {
-	router      *gin.Engine
-	bqClient    *bigquery.BigQueryClient
-	slackClient *slack.SlackClient
-	log         *logrus.Entry
+	router   *gin.Engine
+	bigQuery *bigquery.Client
+	slack    *slack.Client
+	log      *logrus.Entry
 }
 
-func New(bqClient *bigquery.BigQueryClient, slackClient *slack.SlackClient, log *logrus.Logger) *API {
-	r := gin.Default()
-	a := &API{
-		router:      r,
-		bqClient:    bqClient,
-		slackClient: slackClient,
-		log:         logrus.WithField("subsystem", "api"),
+func New(bqClient *bigquery.Client, slackClient *slack.Client, log *logrus.Entry) *API {
+	api := &API{
+		router:   gin.Default(),
+		bigQuery: bqClient,
+		slack:    slackClient,
+		log:      log,
 	}
-	a.addSODARouters()
+	api.addSodaRouters()
 
-	return a
+	return api
 }
 
 func (a *API) Run() error {
 	return a.router.Run()
 }
 
-func (a *API) addSODARouters() {
+func (a *API) addSodaRouters() {
 	a.router.POST("/soda/new", func(c *gin.Context) {
-		sodaBytes, err := ioutil.ReadAll(c.Request.Body)
+		sodaBytes, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "reading request body",
+				"error":   err.Error(),
 			})
 			return
 		}
 
-		sodaResults := models.SodaTest{}
+		sodaResults := models.SodaReport{}
 		if err := json.Unmarshal(sodaBytes, &sodaResults); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "unmarshal request body",
+				"error":   err.Error(),
 			})
 			return
 		}
 
 		if err := a.processSodaResults(c, sodaResults); err != nil {
+			a.log.WithError(err).Error("processing Soda results")
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "error processing soda results",
+				"message": "error processing Soda results",
+				"error":   err.Error(),
 			})
 			return
 		}
@@ -68,15 +72,13 @@ func (a *API) addSODARouters() {
 	})
 }
 
-func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaTest) error {
-	if err := a.slackClient.Notify(sodaTest); err != nil {
-		a.log.Errorf("sending slack notification: %v", err)
-		return err
+func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaReport) error {
+	if err := a.slack.Notify(sodaTest); err != nil {
+		return fmt.Errorf("sending Slack notification: %w", err)
 	}
 
-	if err := a.bqClient.StoreSodaResults(ctx, sodaTest); err != nil {
-		a.log.Errorf("storing soda results %v", err)
-		return err
+	if err := a.bigQuery.StoreResults(ctx, sodaTest); err != nil {
+		return fmt.Errorf("storing Soda results: %w", err)
 	}
 
 	return nil
