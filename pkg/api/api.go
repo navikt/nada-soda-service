@@ -73,7 +73,7 @@ func (a *API) addSodaRouters() {
 }
 
 func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaReport) error {
-	if err := a.slack.NotifyOnDiscrepancies(sodaTest); err != nil {
+	if err := a.slack.Notify(sodaTest); err != nil {
 		return fmt.Errorf("sending Slack notification: %w", err)
 	}
 

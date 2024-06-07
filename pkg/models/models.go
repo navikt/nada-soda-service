@@ -1,9 +1,10 @@
 package models
 
 type SodaReport struct {
-	GCPProject   string `json:"gcpProject"`
-	Dataset      string `json:"dataset"`
-	SlackChannel string `json:"slackChannel"`
+	GCPProject              string  `json:"gcpProject"`
+	Dataset                 string  `json:"dataset"`
+	SlackChannel            string  `json:"slackChannel"`
+	SlackNotifyOnPassedScan *string `json:"slackNotifyOnScanPassed"`
 
 	Results []TestResult `json:"testResults"`
 }

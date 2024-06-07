@@ -23,7 +23,7 @@ func main() {
 	}
 
 	slackToken := os.Getenv("SLACK_TOKEN")
-	slackClient := slack.New(slackToken)
+	slackClient := slack.New(slackToken, logrus.WithField("subsystem", "slack"))
 
 	router := api.New(bqClient, slackClient, log.WithField("subsystem", "api"))
 	if err := router.Run(); err != nil {
