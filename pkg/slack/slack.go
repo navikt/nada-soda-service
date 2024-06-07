@@ -56,10 +56,13 @@ func (s *Client) Notify(sodaTest models.SodaReport) error {
 func (s *Client) findDiscrepancies(sodaResults []models.TestResult) (bool, testDiscrepancies) {
 	discrepancies := testDiscrepancies{}
 	for _, r := range sodaResults {
+		fmt.Println(r.Table)
+		fmt.Println(r.Definition)
+		fmt.Println(r.Outcome)
 		switch r.Outcome {
 		case "pass":
 			continue
-		case "fail":
+		case "fail", "error":
 			discrepancies.Errors = append(discrepancies.Errors, r)
 		default:
 			discrepancies.Warnings = append(discrepancies.Warnings, r)
