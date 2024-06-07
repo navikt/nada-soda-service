@@ -4,54 +4,42 @@ on:
     branches:
       - '*'
 
-jobs:
-  set-version:
-    name: Set version
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.set-version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: set version
-        id: set-version
-        run: echo ::set-output name=version::"$(date '+%Y-%m-%d')-$(git --no-pager log -1 --pretty=%h)"
+permissions:
+  contents: read
+  id-token: write
 
-  build-and-deploy:
-    name: Build and deploy
+jobs:        
+  build-and-push:
+    name: Build and push GAR
     runs-on: ubuntu-20.04
-    needs: set-version
+    outputs:
+      image: ${{ steps.docker-build-push.outputs.image }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up environment
-      run: |
-        version=${{ needs.set-version.outputs.version }}
-        prefix=ghcr.io/${{ github.repository }}
-        echo "IMAGE=$prefix:$version" >> $GITHUB_ENV
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@49ed152c8eca782a232dede0303416e8f356c37b # Use commit-sha1 instead of tag for security concerns
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+      - name: Push docker image to GAR
+        uses: nais/docker-build-push@v0
+        id: docker-build-push
+        with:
+          team: nada
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
 
-    - name: Build and push Dockerimage
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: ${{ env.IMAGE }}
-
-    - name: Deploy to dev-gcp
-      uses: nais/deploy/actions/deploy@v1
-      env:
-        APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-        CLUSTER: dev-gcp
-        RESOURCE: .nais/nais.yaml
-
-    - name: Deploy to prod-gcp
-      uses: nais/deploy/actions/deploy@v1
-      if: github.ref == 'refs/heads/main'
-      env:
-        APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-        CLUSTER: prod-gcp
-        RESOURCE: .nais/nais.yaml
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-20.04
+    needs: [build-and-push]
+    steps: Deploy to dev-gcp
+      - uses: actions/checkout@v4
+      - name: 
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/nais.yaml
+          VAR: image=${{ needs.build-and-push.outputs.image }}
+      - name: Deploy to prod-gcp
+        uses: nais/deploy/actions/deploy@v2
+        if: github.ref == 'refs/heads/main'
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/nais.yaml
+          VAR: image=${{ needs.build-and-push.outputs.image }}
