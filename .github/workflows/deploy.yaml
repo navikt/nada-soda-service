@@ -28,15 +28,15 @@ jobs:
     name: Deploy
     runs-on: ubuntu-20.04
     needs: [build-and-push]
-    steps: Deploy to dev-gcp
+    steps: Deploy
       - uses: actions/checkout@v4
-      - name: 
+      - name: Deploy dev-gcp
         uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais.yaml
           VAR: image=${{ needs.build-and-push.outputs.image }}
-      - name: Deploy to prod-gcp
+      - name: Deploy prod-gcp
         uses: nais/deploy/actions/deploy@v2
         if: github.ref == 'refs/heads/main'
         env:
