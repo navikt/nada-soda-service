@@ -28,7 +28,7 @@ func New(bqClient *bigquery.BigQueryClient, slackClient *slack.SlackClient, log 
 		slackClient: slackClient,
 		log:         logrus.WithField("subsystem", "api"),
 	}
-	a.addSODARouters(r)
+	a.addSODARouters()
 
 	return a
 }
@@ -37,7 +37,7 @@ func (a *API) Run() error {
 	return a.router.Run()
 }
 
-func (a *API) addSODARouters(r *gin.Engine) {
+func (a *API) addSODARouters() {
 	a.router.POST("/soda/new", func(c *gin.Context) {
 		sodaBytes, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
@@ -69,13 +69,13 @@ func (a *API) addSODARouters(r *gin.Engine) {
 }
 
 func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaTest) error {
-	if err := a.slackClient.NotifyOnTestErrors(sodaTest); err != nil {
+	if err := a.slackClient.Notify(sodaTest); err != nil {
 		a.log.Errorf("sending slack notification: %v", err)
 		return err
 	}
 
 	if err := a.bqClient.StoreSodaResults(ctx, sodaTest); err != nil {
-		a.log.Error("storing soda results %v", err)
+		a.log.Errorf("storing soda results %v", err)
 		return err
 	}
 

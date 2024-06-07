@@ -2,6 +2,7 @@ package slack
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/navikt/nada-soda-service/pkg/models"
 	"github.com/sirupsen/logrus"
@@ -25,14 +26,27 @@ func New(slackToken string, log *logrus.Entry) *SlackClient {
 	}
 }
 
-func (s *SlackClient) NotifyOnTestErrors(sodaTest models.SodaTest) error {
+func (s *SlackClient) Notify(sodaTest models.SodaTest) error {
 	if sodaTest.SlackChannel == "" {
 		s.log.Warningf("no slack channel provided for dataset %v.%v", sodaTest.GCPProject, sodaTest.Dataset)
 		return nil
 	}
 	if hasDiscrepancies, discrepancies := s.findDiscrepancies(sodaTest.Results); hasDiscrepancies {
-		if err := s.postNotification(discrepancies, sodaTest.GCPProject, sodaTest.Dataset, sodaTest.SlackChannel); err != nil {
+		topSection, attachments := s.createDiscrepancyMessage(discrepancies, sodaTest.GCPProject, sodaTest.Dataset)
+		if err := s.postNotification(sodaTest.SlackChannel, topSection, attachments); err != nil {
 			return err
+		}
+	} else if sodaTest.SlackNotifyOnPassedScan != nil {
+		notifyPassed, err := strconv.ParseBool(*sodaTest.SlackNotifyOnPassedScan)
+		if err != nil {
+			s.log.Warningf("unable to parse provided boolean value '%v' for slack notification on passed soda scan: %v", sodaTest.SlackNotifyOnPassedScan, err)
+			return nil
+		}
+		if notifyPassed {
+			topSection, attachments := s.createPassedScanMessage(sodaTest.GCPProject, sodaTest.Dataset)
+			if err := s.postNotification(sodaTest.SlackChannel, topSection, attachments); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -55,10 +69,9 @@ func (s *SlackClient) findDiscrepancies(sodaResults []models.TestResult) (bool, 
 	return len(discrepancies.Errors) > 0 || len(discrepancies.Warnings) > 0, discrepancies
 }
 
-func (s *SlackClient) postNotification(d testDiscrepancies, projectID, dataset, slackChannel string) error {
+func (s *SlackClient) postNotification(slackChannel string, topSection slack.Block, attachments []slack.Attachment) error {
 	slackClient := slack.New(s.slackToken)
 
-	topSection, attachments := s.createMessage(d, projectID, dataset)
 	_, _, err := slackClient.PostMessage(slackChannel, slack.MsgOptionBlocks(topSection), slack.MsgOptionAttachments(attachments...))
 	if err != nil {
 		return err
@@ -67,7 +80,26 @@ func (s *SlackClient) postNotification(d testDiscrepancies, projectID, dataset, 
 	return nil
 }
 
-func (s *SlackClient) createMessage(d testDiscrepancies, projectID, dataset string) (slack.Block, []slack.Attachment) {
+func (s *SlackClient) createPassedScanMessage(projectID, dataset string) (slack.Block, []slack.Attachment) {
+	topMessage := slack.TextBlockObject{
+		Type:  "plain_text",
+		Text:  "SODA scan gjennomført uten feil :checked:",
+		Emoji: true,
+	}
+
+	topSection := slack.NewSectionBlock(&topMessage, nil, nil)
+	attachments := []slack.Attachment{
+		{
+			Color:      "#00ff00",
+			AuthorName: fmt.Sprintf("%v.%v", projectID, dataset),
+			Footer:     "SODA Bot",
+		},
+	}
+
+	return topSection, attachments
+}
+
+func (s *SlackClient) createDiscrepancyMessage(d testDiscrepancies, projectID, dataset string) (slack.Block, []slack.Attachment) {
 	topMessage := slack.TextBlockObject{
 		Type:  "plain_text",
 		Text:  "Varsel om datakvalitetsavvik :gasp:",

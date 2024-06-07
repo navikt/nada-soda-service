@@ -2,7 +2,7 @@ name: build, push and deploy
 on: 
   push:
     branches:
-      - 'main'
+      - '*'
 
 jobs:
   set-version:
@@ -50,6 +50,7 @@ jobs:
 
     - name: Deploy to prod-gcp
       uses: nais/deploy/actions/deploy@v1
+      if: github.ref == 'refs/heads/main'
       env:
         APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
         CLUSTER: prod-gcp
