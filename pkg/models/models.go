@@ -6,7 +6,8 @@ type SodaReport struct {
 	SlackChannel            string  `json:"slackChannel"`
 	SlackNotifyOnPassedScan *string `json:"slackNotifyOnScanPassed"`
 
-	Results []TestResult `json:"testResults"`
+	Results     []TestResult `json:"testResults"`
+	ConfigError *string      `json:"configError"`
 }
 
 type TestResult struct {

@@ -15,7 +15,7 @@ type Client struct {
 }
 
 type testDiscrepancies struct {
-	Errors   []models.TestResult
+	Fails    []models.TestResult
 	Warnings []models.TestResult
 }
 
@@ -31,8 +31,8 @@ func (s *Client) Notify(sodaTest models.SodaReport) error {
 		return fmt.Errorf("no Slack channel provided for dataset %v.%v", sodaTest.GCPProject, sodaTest.Dataset)
 	}
 
-	if hasDiscrepancies, discrepancies := s.findDiscrepancies(sodaTest.Results); hasDiscrepancies {
-		topSection, attachments := s.createDiscrepancyMessage(discrepancies, sodaTest.GCPProject, sodaTest.Dataset)
+	if hasDiscrepancies, discrepancies := s.findDiscrepancies(sodaTest.ConfigError, sodaTest.Results); hasDiscrepancies {
+		topSection, attachments := s.createDiscrepancyMessage(sodaTest.ConfigError, discrepancies, sodaTest.GCPProject, sodaTest.Dataset)
 		if err := s.postNotification(sodaTest.SlackChannel, topSection, attachments); err != nil {
 			return err
 		}
@@ -53,20 +53,20 @@ func (s *Client) Notify(sodaTest models.SodaReport) error {
 	return nil
 }
 
-func (s *Client) findDiscrepancies(sodaResults []models.TestResult) (bool, testDiscrepancies) {
+func (s *Client) findDiscrepancies(configError *string, sodaResults []models.TestResult) (bool, testDiscrepancies) {
 	discrepancies := testDiscrepancies{}
 	for _, r := range sodaResults {
 		switch r.Outcome {
 		case "pass":
 			continue
-		case "fail":
-			discrepancies.Errors = append(discrepancies.Errors, r)
+		case "fail", "error":
+			discrepancies.Fails = append(discrepancies.Fails, r)
 		default:
 			discrepancies.Warnings = append(discrepancies.Warnings, r)
 		}
 	}
 
-	return len(discrepancies.Errors) > 0 || len(discrepancies.Warnings) > 0, discrepancies
+	return configError != nil || len(discrepancies.Fails) > 0 || len(discrepancies.Warnings) > 0, discrepancies
 }
 
 func (s *Client) postNotification(slackChannel string, topSection slack.Block, attachments []slack.Attachment) error {
@@ -99,19 +99,30 @@ func (s *Client) createPassedScanMessage(projectID, dataset string) (slack.Block
 	return topSection, attachments
 }
 
-func (s *Client) createDiscrepancyMessage(d testDiscrepancies, projectID, dataset string) (slack.Block, []slack.Attachment) {
+func (s *Client) createDiscrepancyMessage(configError *string, d testDiscrepancies, projectID, dataset string) (slack.Block, []slack.Attachment) {
 	topMessage := slack.TextBlockObject{
 		Type:  "plain_text",
-		Text:  "Varsel om datakvalitetsavvik :gasp:",
+		Text:  "Datakvalitetssjekk feiler :gasp:",
 		Emoji: true,
 	}
 
 	topSection := slack.NewSectionBlock(&topMessage, nil, nil)
 	attachments := []slack.Attachment{}
 
-	if len(d.Errors) > 0 {
+	if configError != nil {
+		attachments = append(attachments, slack.Attachment{
+			Color:      "#ff2d00",
+			AuthorName: fmt.Sprintf("%v.%v", projectID, dataset),
+			Title:      "Tester har konfigurasjonsfeil",
+			Text:       *configError,
+			Footer:     "SODA Bot",
+			Fallback:   "Tester har konfigurasjonsfeil",
+		})
+	}
+
+	if len(d.Fails) > 0 {
 		message := ""
-		for _, e := range d.Errors {
+		for _, e := range d.Fails {
 			line1 := ""
 			if e.Column != "" {
 				line1 = fmt.Sprintf("_*Tabell: %v*_ _*kolonne: %v*_\n", e.Table, e.Column)
