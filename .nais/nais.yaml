@@ -11,6 +11,7 @@ spec:
     outbound:
       external:
         - host: slack.com
+        - host: hooks.slack.com
     inbound:
       rules:
         - application: '*'
