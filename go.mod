@@ -6,13 +6,13 @@ require (
 	cloud.google.com/go/bigquery v1.62.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/slack-go/slack v0.13.1
-	google.golang.org/api v0.191.0
+	github.com/slack-go/slack v0.14.0
+	google.golang.org/api v0.192.0
 )
 
 require (
 	cloud.google.com/go v0.115.0 // indirect
-	cloud.google.com/go/auth v0.7.3 // indirect
+	cloud.google.com/go/auth v0.8.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.3 // indirect
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
 	cloud.google.com/go/iam v1.1.12 // indirect
