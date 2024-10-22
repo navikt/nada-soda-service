@@ -5,6 +5,7 @@ type SodaReport struct {
 	Dataset                 string  `json:"dataset"`
 	SlackChannel            string  `json:"slackChannel"`
 	SlackNotifyOnPassedScan *string `json:"slackNotifyOnScanPassed"`
+	DockerImage             string  `json:"dockerImage"`
 
 	Results     []TestResult `json:"testResults"`
 	ConfigError *string      `json:"configError"`
