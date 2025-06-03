@@ -42,5 +42,5 @@ jobs:
         if: github.ref == 'refs/heads/main'
         env:
           CLUSTER: prod-gcp
-          RESOURCE: .nais/nais.yaml
+          RESOURCE: .nais/nais.yaml,.nais/alert.yaml
           VAR: image=${{ needs.build-and-push.outputs.image }}
