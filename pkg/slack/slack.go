@@ -81,10 +81,11 @@ func (s *Client) postNotification(slackChannel string, topSection slack.Block, a
 }
 
 func (s *Client) createPassedScanMessage(projectID, dataset string) (slack.Block, []slack.Attachment) {
+	emoji := true
 	topMessage := slack.TextBlockObject{
 		Type:  "plain_text",
 		Text:  "SODA scan gjennomført uten feil :checked:",
-		Emoji: true,
+		Emoji: &emoji,
 	}
 
 	topSection := slack.NewSectionBlock(&topMessage, nil, nil)
@@ -100,10 +101,11 @@ func (s *Client) createPassedScanMessage(projectID, dataset string) (slack.Block
 }
 
 func (s *Client) createDiscrepancyMessage(configError *string, d testDiscrepancies, projectID, dataset string) (slack.Block, []slack.Attachment) {
+	emoji := true
 	topMessage := slack.TextBlockObject{
 		Type:  "plain_text",
 		Text:  "Datakvalitetssjekk feiler :gasp:",
-		Emoji: true,
+		Emoji: &emoji,
 	}
 
 	topSection := slack.NewSectionBlock(&topMessage, nil, nil)
