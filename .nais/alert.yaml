@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: soda-service-alert
+  namespace: nada
+  labels:
+    team: nada
+spec:
+  groups:
+  - name: soda-service-alert
+    rules:
+    - alert: InstanceDown
+      expr: kube_deployment_status_replicas_available{namespace="nada", deployment="nada-soda"} == 0
+      for: 2m
+      annotations:
+        consequence: Nada Soda service is unavailable
+        action: "`kubectl describe pod <podname>` -> `kubectl logs <podname>`"
+        summary: |-
+          No nada soda pods are running in prod-gcp
+      labels:
+        namespace: nada
+        severity: critical
