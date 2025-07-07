@@ -8,8 +8,8 @@ require (
 	cloud.google.com/go/bigquery v1.69.0
 	github.com/gin-gonic/gin v1.10.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/slack-go/slack v0.17.2
-	google.golang.org/api v0.239.0
+	github.com/slack-go/slack v0.17.3
+	google.golang.org/api v0.240.0
 )
 
 require (
