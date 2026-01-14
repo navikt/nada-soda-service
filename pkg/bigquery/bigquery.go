@@ -29,7 +29,7 @@ type BigQueryRow struct {
 	Time               string   `json:"time"`
 	Column             string   `json:"column"`
 	Type               string   `json:"type"`
-	Filter             []string `json:"filter"`
+	Filter             string   `json:"filter"`
 	Image              string   `json:"image"`
 }
 
@@ -67,8 +67,8 @@ func createTableIfNotExists(ctx context.Context, bqClient *bigquery.Client, data
 		{Name: "time", Type: bigquery.TimestampFieldType},
 		{Name: "column", Type: bigquery.StringFieldType},
 		{Name: "type", Type: bigquery.StringFieldType},
-		{Name: "filter", Type: bigquery.StringFieldType, Repeated: true},
 		{Name: "image", Type: bigquery.StringFieldType},
+		{Name: "filter", Type: bigquery.StringFieldType},
 	}
 
 	metadata := &bigquery.TableMetadata{
@@ -122,8 +122,8 @@ func toBigQueryRows(report models.SodaReport) []BigQueryRow {
 			Time:               r.Time,
 			Column:             r.Column,
 			Type:               r.Type,
-			Filter:             r.Filter,
 			Image:              report.DockerImage,
+			Filter:             r.Filter,
 		})
 	}
 
