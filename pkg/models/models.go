@@ -22,5 +22,5 @@ type TestResult struct {
 	Time               string   `json:"time"`
 	Column             string   `json:"column"`
 	Type               string   `json:"type"`
-	Filter             string   `json:"filter"`
+	Filter             *string  `json:"filter"`
 }

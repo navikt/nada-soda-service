@@ -17,20 +17,20 @@ type Client struct {
 }
 
 type BigQueryRow struct {
-	ID                 string   `json:"id"`
-	Project            string   `json:"project"`
-	Dataset            string   `json:"dataset"`
-	Table              string   `json:"table"`
-	Test               string   `json:"test"`
-	Outcome            string   `json:"outcome"`
-	Definition         string   `json:"definition"`
-	Metrics            []string `json:"metrics"`
-	ResourceAttributes []string `json:"resourceAttributes"`
-	Time               string   `json:"time"`
-	Column             string   `json:"column"`
-	Type               string   `json:"type"`
-	Filter             string   `json:"filter"`
-	Image              string   `json:"image"`
+	ID                 string              `json:"id"`
+	Project            string              `json:"project"`
+	Dataset            string              `json:"dataset"`
+	Table              string              `json:"table"`
+	Test               string              `json:"test"`
+	Outcome            string              `json:"outcome"`
+	Definition         string              `json:"definition"`
+	Metrics            []string            `json:"metrics"`
+	ResourceAttributes []string            `json:"resourceAttributes"`
+	Time               string              `json:"time"`
+	Column             string              `json:"column"`
+	Type               string              `json:"type"`
+	Filter             bigquery.NullString `json:"filter"`
+	Image              string              `json:"image"`
 }
 
 func New(ctx context.Context, project, dataset, table string) (*Client, error) {
@@ -109,6 +109,11 @@ func (b *Client) StoreResults(ctx context.Context, report models.SodaReport) err
 func toBigQueryRows(report models.SodaReport) []BigQueryRow {
 	rows := []BigQueryRow{}
 	for _, r := range report.Results {
+		filter := bigquery.NullString{}
+		if r.Filter != nil {
+			filter = bigquery.NullString{StringVal: *r.Filter, Valid: true}
+		}
+		
 		rows = append(rows, BigQueryRow{
 			ID:                 r.ID,
 			Project:            report.GCPProject,
@@ -123,7 +128,7 @@ func toBigQueryRows(report models.SodaReport) []BigQueryRow {
 			Column:             r.Column,
 			Type:               r.Type,
 			Image:              report.DockerImage,
-			Filter:             r.Filter,
+			Filter:             filter,
 		})
 	}
 
