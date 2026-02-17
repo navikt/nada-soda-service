@@ -109,11 +109,6 @@ func (b *Client) StoreResults(ctx context.Context, report models.SodaReport) err
 func toBigQueryRows(report models.SodaReport) []BigQueryRow {
 	rows := []BigQueryRow{}
 	for _, r := range report.Results {
-		filter := bigquery.NullString{}
-		if r.Filter != nil {
-			filter = bigquery.NullString{StringVal: *r.Filter, Valid: true}
-		}
-		
 		rows = append(rows, BigQueryRow{
 			ID:                 r.ID,
 			Project:            report.GCPProject,
@@ -128,9 +123,16 @@ func toBigQueryRows(report models.SodaReport) []BigQueryRow {
 			Column:             r.Column,
 			Type:               r.Type,
 			Image:              report.DockerImage,
-			Filter:             filter,
+			Filter:             toNullString(r.Filter),
 		})
 	}
 
 	return rows
+}
+
+func toNullString(s *string) bigquery.NullString {
+	if s != nil && *s != "" {
+		return bigquery.NullString{StringVal: *s, Valid: true}
+	}
+	return bigquery.NullString{}
 }
