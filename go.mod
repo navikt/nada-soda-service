@@ -1,15 +1,13 @@
 module github.com/navikt/nada-soda-service
 
-go 1.24.0
-
-toolchain go1.24.1
+go 1.25
 
 require (
 	cloud.google.com/go/bigquery v1.73.1
 	github.com/gin-gonic/gin v1.11.0
 	github.com/sirupsen/logrus v1.9.4
-	github.com/slack-go/slack v0.17.3
-	google.golang.org/api v0.266.0
+	github.com/slack-go/slack v0.18.0
+	google.golang.org/api v0.267.0
 )
 
 require (
