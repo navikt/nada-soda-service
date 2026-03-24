@@ -1,6 +1,6 @@
 module github.com/navikt/nada-soda-service
 
-go 1.25.0
+go 1.26.1
 
 require (
 	cloud.google.com/go/bigquery v1.74.0
