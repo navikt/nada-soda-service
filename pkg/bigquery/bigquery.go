@@ -2,6 +2,7 @@ package bigquery
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"cloud.google.com/go/bigquery"
@@ -25,6 +26,7 @@ type BigQueryRow struct {
 	Outcome            string              `json:"outcome"`
 	Definition         string              `json:"definition"`
 	Metrics            []string            `json:"metrics"`
+	MetricValues       bigquery.NullString `json:"metricValues"`
 	ResourceAttributes []string            `json:"resourceAttributes"`
 	Time               string              `json:"time"`
 	Column             string              `json:"column"`
@@ -63,6 +65,7 @@ func createTableIfNotExists(ctx context.Context, bqClient *bigquery.Client, data
 		{Name: "outcome", Type: bigquery.StringFieldType, Required: true},
 		{Name: "definition", Type: bigquery.StringFieldType},
 		{Name: "metrics", Type: bigquery.StringFieldType, Repeated: true},
+		{Name: "metricValues", Type: bigquery.StringFieldType},
 		{Name: "resourceAttributes", Type: bigquery.StringFieldType, Repeated: true},
 		{Name: "time", Type: bigquery.TimestampFieldType},
 		{Name: "column", Type: bigquery.StringFieldType},
@@ -118,6 +121,7 @@ func toBigQueryRows(report models.SodaReport) []BigQueryRow {
 			Outcome:            r.Outcome,
 			Definition:         r.Definition,
 			Metrics:            r.Metrics,
+			MetricValues:       toNullJSON(r.MetricValues),
 			ResourceAttributes: r.ResourceAttributes,
 			Time:               r.Time,
 			Column:             r.Column,
@@ -128,6 +132,17 @@ func toBigQueryRows(report models.SodaReport) []BigQueryRow {
 	}
 
 	return rows
+}
+
+func toNullJSON(v map[string]any) bigquery.NullString {
+	if len(v) == 0 {
+		return bigquery.NullString{}
+	}
+	b, err := json.Marshal(v)
+	if err != nil {
+		return bigquery.NullString{}
+	}
+	return bigquery.NullString{StringVal: string(b), Valid: true}
 }
 
 func toNullString(s *string) bigquery.NullString {
