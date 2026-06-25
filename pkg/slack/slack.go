@@ -61,8 +61,10 @@ func (s *Client) findDiscrepancies(configError *string, sodaResults []models.Tes
 			continue
 		case "fail", "error":
 			discrepancies.Fails = append(discrepancies.Fails, r)
-		default:
+		case "warn":
 			discrepancies.Warnings = append(discrepancies.Warnings, r)
+		default:
+			// Silently skip v4-only outcomes (not_evaluated, excluded) and any unknown outcomes.
 		}
 	}
 

@@ -51,7 +51,12 @@ Sett følgende miljøvariabler i terminalen du skal kjøre opp appen:
 
 `SLACK_TOKEN` kan settes med:
 ````bash
-export SLACK_TOKEN=$(kubectl get secret --context=dev-gcp --namespace=nada slack-token -o jsonpath='{.data.SLACK_TOKEN}' | base64 -d)`
+export SLACK_TOKEN=$(nais secret get soda-slack-token \
+   --environment prod-gcp \
+   --team nada \
+   --with-values \
+   --reason "Local development of nada-soda-service" \
+   --output json | jq -r '.data[] | select(.key == "SLACK_TOKEN") | .value');
 ````
 
 Kjør så appen med:

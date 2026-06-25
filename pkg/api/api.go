@@ -78,7 +78,7 @@ func (a *API) processSodaResults(ctx context.Context, sodaTest models.SodaReport
 	}
 
 	if err := a.bigQuery.StoreResults(ctx, sodaTest); err != nil {
-		return fmt.Errorf("storing Soda results: %w", err)
+		a.log.WithError(err).Error("storing Soda results in BigQuery (non-fatal)")
 	}
 
 	return nil
