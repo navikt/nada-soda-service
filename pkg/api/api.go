@@ -22,8 +22,13 @@ type API struct {
 }
 
 func New(bqClient *bigquery.Client, slackClient *slack.Client, log *logrus.Entry) *API {
+	router := gin.Default()
+	if err := router.SetTrustedProxies(nil); err != nil {
+		log.WithError(err).Error("setting trusted proxies")
+	}
+
 	api := &API{
-		router:   gin.Default(),
+		router:   router,
 		bigQuery: bqClient,
 		slack:    slackClient,
 		log:      log,
