@@ -3,6 +3,7 @@ package slack
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/navikt/nada-soda-service/pkg/models"
 	"github.com/sirupsen/logrus"
@@ -43,7 +44,7 @@ func (s *Client) Notify(sodaTest models.SodaReport) error {
 			return nil
 		}
 		if notifyPassed {
-			topSection, attachments := s.createPassedScanMessage(sodaTest.GCPProject, sodaTest.Dataset)
+			topSection, attachments := s.createPassedScanMessage(sodaTest.GCPProject, sodaTest.Dataset, sodaTest.Results)
 			if err := s.postNotification(sodaTest.SlackChannel, topSection, attachments); err != nil {
 				return err
 			}
@@ -82,19 +83,38 @@ func (s *Client) postNotification(slackChannel string, topSection slack.Block, a
 	return nil
 }
 
-func (s *Client) createPassedScanMessage(projectID, dataset string) (slack.Block, []slack.Attachment) {
-	emoji := true
+func (s *Client) createPassedScanMessage(projectID, dataset string, results []models.TestResult) (slack.Block, []slack.Attachment) {
 	topMessage := slack.TextBlockObject{
-		Type:  "plain_text",
-		Text:  "SODA scan gjennomført uten feil :checked:",
-		Emoji: &emoji,
+		Type: "plain_text",
+		Text: "Datakvalitetssjekker bestått",
 	}
 
 	topSection := slack.NewSectionBlock(&topMessage, nil, nil)
+	tables := make([]string, 0, len(results))
+	seenTables := make(map[string]struct{}, len(results))
+	for _, result := range results {
+		if result.Table == "" {
+			continue
+		}
+		if _, seen := seenTables[result.Table]; seen {
+			continue
+		}
+		seenTables[result.Table] = struct{}{}
+		tables = append(tables, result.Table)
+	}
+
+	tableText := "Tabell ikke oppgitt"
+	if len(tables) == 1 {
+		tableText = fmt.Sprintf("Tabell: %s", tables[0])
+	} else if len(tables) > 1 {
+		tableText = fmt.Sprintf("Tabeller: %s", strings.Join(tables, ", "))
+	}
+
 	attachments := []slack.Attachment{
 		{
 			Color:      "#00ff00",
 			AuthorName: fmt.Sprintf("%v.%v", projectID, dataset),
+			Text:       tableText,
 			Footer:     "SODA Bot",
 		},
 	}
